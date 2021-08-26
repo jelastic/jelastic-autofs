@@ -1,0 +1,39 @@
+FROM jelastic/ubuntuvps:16.04
+
+RUN apt update && \
+    apt install -y apt-utils && \
+    apt install -y build-essential \
+    autoconf \
+    fakeroot \
+    dpkg-dev \
+    debhelper \
+    bison \
+    dpkg-dev \
+    e2fsprogs \
+    flex \
+    libhesiod-dev \
+    libkrb5-dev \
+    libldap-dev \
+    libsasl2-dev \
+    libssl-dev \
+    libxml2-dev \
+    pkg-config \
+    sssd-common
+
+ADD jelastic-autofs.patch /root/jelastic-autofs.patch
+
+RUN mkdir -p /root/autofs && cd /root/autofs && \
+    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/5.1.6-2/autofs_5.1.6-2.dsc && \
+    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/5.1.6-2/autofs_5.1.6.orig.tar.xz && \
+    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/5.1.6-2/autofs_5.1.6-2.debian.tar.xz && \
+    dpkg-source -x autofs_5.1.6-2.dsc && patch /root/autofs/autofs-5.1.6/daemon/direct.c < /root/jelastic-autofs.patch && \
+    echo '9' > /root/autofs/autofs-5.1.6/debian/compat && \
+    sed -i 's/5.1.6-2/5.1.6-1j/' /root/autofs/autofs-5.1.6/debian/changelog
+
+ADD rules /root/autofs/autofs-5.1.6/debian/rules
+
+RUN echo "cd /root/autofs/autofs-5.1.6/ && dpkg-buildpackage -rfakeroot -b -d && cd ../ && cp -f *.deb /mnt" > /run.sh
+
+CMD bash /run.sh
+
+#docker run -v /home/dmytro/autofs/deb:/mnt test/test

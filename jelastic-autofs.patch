@@ -1,0 +1,38 @@
+--- autofs-5.1.6/daemon/direct.c.orig	2020-10-22 13:51:45.278348851 +0000
++++ autofs-5.1.6/daemon/direct.c	2020-10-22 13:50:48.768881902 +0000
+@@ -36,6 +36,8 @@
+ #include <sched.h>
+ 
+ #define INCLUDE_PENDING_FUNCTIONS
++#define J_DEFAULT_TIMEOUT_TO_FORCE_UMOUNT 1;
++#define J_GFS_HA_DEFAULT "true";
+ #include "automount.h"
+ 
+ /* Attribute to create detached thread */
+@@ -937,6 +939,26 @@
+ 
+ 		debug(ap->logopt, "send expire to trigger %s", next->mp);
+ 
++		char *j_gfs_ha_enabled = getenv("GFS_HA_ENABLED") ? getenv("GFS_HA_ENABLED") : J_GFS_HA_DEFAULT;
++		debug(ap->logopt,"Jelastic Failover check is set to %s",j_gfs_ha_enabled);
++
++		char *j_cmd = NULL;
++		if (!strcmp(j_gfs_ha_enabled,"true")){ 
++			// char j_cmd[80];
++			j_cmd = (char*)malloc(42 + sizeof(char) * strlen(next->mp));
++			/* Checking for memory allocation */
++			if (j_cmd == NULL) {
++				debug(ap->logopt,"====== Error in allocating memory \n");
++				return NULL;
++			}
++			int j_reply_timeout_to_force_umount = getenv("FORCE_UMOUNT_AFTER") ? atoi(getenv("FORCE_UMOUNT_AFTER")) : J_DEFAULT_TIMEOUT_TO_FORCE_UMOUNT;
++			debug(ap->logopt,"=================== Jelastic GFS HA healthcheck is enabled, Timeout %d, Path %s",j_reply_timeout_to_force_umount,next->mp);
++			sprintf(j_cmd,"timeout %d ls %s || umount -l -t nfs4 -a",j_reply_timeout_to_force_umount,next->mp);
++			debug(ap->logopt,"=================== cmd: %s",j_cmd);
++			system(j_cmd);
++			free(j_cmd);
++		}
++
+ 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cur_state);
+ 		ret = ops->expire(ap->logopt, ioctlfd, next->mp, how);
+ 		if (ret)

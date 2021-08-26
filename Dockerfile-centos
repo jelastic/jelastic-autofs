@@ -1,0 +1,35 @@
+ARG TAG
+FROM centos:$TAG
+
+RUN rpm -q "centos-release-8*" 2>/dev/null && REPO="--enablerepo=PowerTools rpcgen "|| REPO=""; \
+    yum install -y $REPO \
+    autoconf \
+    bison \
+    cyrus-sasl-devel \
+    flex \
+    gcc \
+    hesiod-devel \
+    libsss_autofs \
+    libtirpc-devel \
+    libxml2-devel \
+    make \
+    mc \
+    openldap-devel \
+    openssl-devel \
+    rpm-build \
+    wget
+
+RUN mkdir -p /root/rpmbuild/{SOURCES,SPECS} && \
+    wget https://mirrors.edge.kernel.org/pub/linux/daemons/autofs/v5/autofs-5.1.6.tar.gz -O /root/rpmbuild/SOURCES/autofs-5.1.6.tar.gz
+
+COPY autofs-init.patch /root/rpmbuild/SOURCES
+COPY jelastic-autofs.patch /root/rpmbuild/SOURCES
+COPY autofs.spec /root/rpmbuild/SPECS
+
+RUN echo "rpmbuild -ba /root/rpmbuild/SPECS/autofs.spec && \
+    cp /root/rpmbuild/RPMS/x86_64/*.rpm /mnt/ && \
+    cp /root/rpmbuild/SRPMS/*.rpm /mnt/ " >/run.sh
+
+CMD bash /run.sh
+
+#docker run -v /home/dimka/work/autofs/5.1.6/rpm:/mnt  autofs:c7

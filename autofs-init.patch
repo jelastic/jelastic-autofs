@@ -1,0 +1,42 @@
+--- autofs-5.1.5.orig/redhat/autofs.init.in	2020-07-31 12:25:40.474692257 +0000
++++ autofs-5.1.5/redhat/autofs.init.in	2020-07-31 12:41:56.286711145 +0000
+@@ -19,6 +19,7 @@
+ #
+ # Location of the automount daemon and the init directory
+ #
++SYSTEMCTL_SKIP_REDIRECT=1
+ DAEMON=@@sbindir@@/automount
+ prog=`basename $DAEMON`
+ MODULE="autofs4"
+@@ -102,13 +102,29 @@
+ 	return $RETVAL
+ }
+ 
++_wait_prog() {
++	local c=10
++	while [[ $c -gt 0 ]]
++	do
++		[ -n "$(pidof $prog)" ] || return 0
++		c=$(( $c - 1 ))
++		sleep 0.25
++	done
++	return 1
++}
++
+ function stop() {
+ 	echo -n $"Stopping $prog: "
+ 	count=0
+ 	while [ -n "`pidof $prog`" -a $count -lt 15 ] ; do
+ 		killproc $prog -TERM >& /dev/null
+ 		RETVAL=$?
+-		[ $RETVAL = 0 -a -z "`pidof $prog`" ] || sleep 20
++		if [[ $RETVAL -eq 0 ]]
++		then
++			! _wait_prog || break
++		elif [ -z "`pidof $prog`" ]; then
++			sleep 20
++		fi
+ 		count=`expr $count + 1`
+ 	done
+ 	if [ $RETVAL -eq 0 ]; then
+
