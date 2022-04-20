@@ -1,10 +1,14 @@
 ARG TAG
 FROM centos:$TAG
+ARG AUTOFS_VERSION=5.1.8
 
-RUN rpm -q "centos-release-8*" 2>/dev/null && REPO="--enablerepo=PowerTools rpcgen "|| REPO=""; \
+RUN rpm -q "centos-linux-release-8*" 2>/dev/null && sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
+    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
+    REPO="--enablerepo=powertools rpcgen "|| REPO=""; \
     yum install -y $REPO \
     autoconf \
     bison \
+    ca-certificates \
     cyrus-sasl-devel \
     flex \
     gcc \
@@ -17,19 +21,21 @@ RUN rpm -q "centos-release-8*" 2>/dev/null && REPO="--enablerepo=PowerTools rpcg
     openldap-devel \
     openssl-devel \
     rpm-build \
+    systemd-devel \
     wget
 
 RUN mkdir -p /root/rpmbuild/{SOURCES,SPECS} && \
-    wget https://mirrors.edge.kernel.org/pub/linux/daemons/autofs/v5/autofs-5.1.6.tar.gz -O /root/rpmbuild/SOURCES/autofs-5.1.6.tar.gz
+    wget https://mirrors.edge.kernel.org/pub/linux/daemons/autofs/v5/autofs-$AUTOFS_VERSION.tar.gz -O /root/rpmbuild/SOURCES/autofs-$AUTOFS_VERSION.tar.gz
 
-COPY autofs-init.patch /root/rpmbuild/SOURCES
-COPY jelastic-autofs.patch /root/rpmbuild/SOURCES
-COPY autofs.spec /root/rpmbuild/SPECS
+COPY autofs-init.patch 50-mount-recovery.conf mount-recovery mount-recovery.service mount-recovery.timer /root/rpmbuild/SOURCES/
+#COPY jelastic-autofs.patch /root/rpmbuild/SOURCES
+COPY autofs.spec mount-recovery.spec /root/rpmbuild/SPECS/
 
 RUN echo "rpmbuild -ba /root/rpmbuild/SPECS/autofs.spec && \
+    rpmbuild -ba /root/rpmbuild/SPECS/mount-recovery.spec && \
     cp /root/rpmbuild/RPMS/x86_64/*.rpm /mnt/ && \
     cp /root/rpmbuild/SRPMS/*.rpm /mnt/ " >/run.sh
 
 CMD bash /run.sh
 
-#docker run -v /home/dimka/work/autofs/5.1.6/rpm:/mnt  autofs:c7
+#docker run -v /home/dimka/work/autofs/$AUTOFS_VERSION/rpm:/mnt  autofs:c7

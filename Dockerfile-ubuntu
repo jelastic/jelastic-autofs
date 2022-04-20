@@ -1,5 +1,9 @@
 FROM jelastic/ubuntuvps:16.04
 
+ARG AUTOFS_VERSION=5.1.8
+ARG AUTOFS_RELEASE=1ubuntu1
+ARG AUTOFS_RELEASEJ=1
+ARG MR_VERSION=1.1
 RUN apt update && \
     apt install -y apt-utils && \
     apt install -y build-essential \
@@ -20,19 +24,29 @@ RUN apt update && \
     pkg-config \
     sssd-common
 
-ADD jelastic-autofs.patch /root/jelastic-autofs.patch
+#ADD jelastic-autofs.patch /root/jelastic-autofs.patch
 
-RUN mkdir -p /root/autofs && cd /root/autofs && \
-    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/5.1.6-2/autofs_5.1.6-2.dsc && \
-    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/5.1.6-2/autofs_5.1.6.orig.tar.xz && \
-    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/5.1.6-2/autofs_5.1.6-2.debian.tar.xz && \
-    dpkg-source -x autofs_5.1.6-2.dsc && patch /root/autofs/autofs-5.1.6/daemon/direct.c < /root/jelastic-autofs.patch && \
-    echo '9' > /root/autofs/autofs-5.1.6/debian/compat && \
-    sed -i 's/5.1.6-2/5.1.6-1j/' /root/autofs/autofs-5.1.6/debian/changelog
+RUN mkdir -p /root/autofs  && cd /root/autofs && \
+    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/$AUTOFS_VERSION-$AUTOFS_RELEASE/autofs_$AUTOFS_VERSION-$AUTOFS_RELEASE.dsc && \
+    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/$AUTOFS_VERSION-$AUTOFS_RELEASE/autofs_$AUTOFS_VERSION.orig.tar.xz && \
+    wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/autofs/$AUTOFS_VERSION-$AUTOFS_RELEASE/autofs_$AUTOFS_VERSION-$AUTOFS_RELEASE.debian.tar.xz && \
+    dpkg-source -x autofs_$AUTOFS_VERSION-$AUTOFS_RELEASE.dsc && \
+    echo '9' > /root/autofs/autofs-$AUTOFS_VERSION/debian/compat && \
+    sed -i "s/$AUTOFS_VERSION-$AUTOFS_RELEASE/$AUTOFS_VERSION-${AUTOFS_RELEASEJ}j/" /root/autofs/autofs-$AUTOFS_VERSION/debian/changelog && \
+    mkdir -p /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN && cd /root/mount-recovery/mount-recovery-$MR_VERSION && \
+    mkdir -p usr/local/sbin lib/systemd/system etc/systemd/system/autofs.service.d
 
-ADD rules /root/autofs/autofs-5.1.6/debian/rules
+ADD rules /root/autofs/autofs-$AUTOFS_VERSION/debian/rules
+ADD 50-mount-recovery.conf  /root/mount-recovery/mount-recovery-$MR_VERSION/etc/systemd/system/autofs.service.d/
+ADD mount-recovery  /root/mount-recovery/mount-recovery-$MR_VERSION/usr/local/sbin/
+ADD mount-recovery.service mount-recovery.timer  /root/mount-recovery/mount-recovery-$MR_VERSION/lib/systemd/system/
+ADD mount-recovery-postinst /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN/postinst
+ADD mount-recovery-control /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN/control
 
-RUN echo "cd /root/autofs/autofs-5.1.6/ && dpkg-buildpackage -rfakeroot -b -d && cd ../ && cp -f *.deb /mnt" > /run.sh
+RUN chmod 755 /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN/postinst /root/mount-recovery/mount-recovery-$MR_VERSION/usr/local/sbin/mount-recovery
+
+RUN echo "cd /root/autofs/autofs-$AUTOFS_VERSION/ && dpkg-buildpackage -rfakeroot -b -d && cd ../ && cp -f *.deb /mnt" > /run.sh && \
+    echo "cd /root/mount-recovery/ && dpkg-deb --build mount-recovery-$MR_VERSION && cp -f *.deb /mnt" >> /run.sh
 
 CMD bash /run.sh
 

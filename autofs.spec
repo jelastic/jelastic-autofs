@@ -13,7 +13,7 @@
 # Use --without systemd in your rpmbuild command or force values to 0 to
 # disable them.
 #%define with_systemd        %{?_without_systemd:        0} %{?!_without_systemd:        1}
-%define with_systemd        0
+%define with_systemd        1
 
 # Use --without libtirpc in your rpmbuild command or force values to 0 to
 # disable them.
@@ -25,15 +25,15 @@
 
 Summary: A tool from automatically mounting and umounting filesystems.
 Name: autofs
-%define version 5.1.6
+%define version 5.1.8
 %define release 1j
-Version: 5.1.6
+Version: 5.1.8
 Release: 1j%{?dist}
 Epoch: 1
 License: GPL
 Group: System Environment/Daemons
 Source: https://www.kernel.org/pub/linux/daemons/autofs/v5/autofs-%{version}.tar.gz
-Patch0: jelastic-autofs.patch
+#Patch0: jelastic-autofs.patch
 Patch3: autofs-init.patch
 Buildroot: %{_tmppath}/%{name}-tmp
 %if %{with_systemd}
@@ -43,7 +43,7 @@ BuildRequires: systemd-devel
 %if %{with_libtirpc}
 BuildRequires: libtirpc-devel
 %endif
-BuildRequires: autoconf, hesiod-devel, openldap-devel, bison, flex, cyrus-sasl-devel, openssl-devel
+BuildRequires: autoconf, hesiod-devel, openldap-devel, bison, flex, cyrus-sasl-devel, openssl-devel, libxml2-devel
 Requires: chkconfig
 Requires: /bin/bash sed grep /bin/ps
 %if %{with_systemd}
@@ -85,7 +85,7 @@ inkludera nätfilsystem, CD-ROM, floppydiskar, och så vidare.
 
 %prep
 %setup -q -n %{name}-%{version}
-%patch0 -p1
+#%patch0 -p1
 %patch3 -p1
 echo %{version}-%{release} > .version
 %if %{with_systemd}
@@ -149,15 +149,16 @@ install -m 600 samples/autofs_ldap_auth.conf $RPM_BUILD_ROOT/etc/autofs_ldap_aut
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
 %post
+ldconfig
 %if %{with_systemd}
 if [ $1 -eq 1 ]; then
 	%{_bindir}/systemctl daemon-reload >/dev/null 2>&1 || :
 	# autofs has been approved to be enabled by default
-	%{_bindir}/systemctl enable %{name}.service >/dev/null 2>&1 || :
+#	%{_bindir}/systemctl enable %{name}.service >/dev/null 2>&1 || :
 fi
 %else
 if [ $1 -eq 1 ]; then
-	/sbin/chkconfig --add autofs
+	%{_sbindir}/chkconfig --add autofs
 fi
 %endif
 
@@ -169,8 +170,8 @@ if [ $1 -eq 0 ] ; then
 fi
 %else
 if [ $1 -eq 0 ] ; then
-	/sbin/service autofs stop > /dev/null 2>&1 || :
-	/sbin/chkconfig --del autofs
+	%{_sbindir}/service autofs stop > /dev/null 2>&1 || :
+	%{_sbindir}/chkconfig --del autofs
 fi
 %endif
 
@@ -183,8 +184,9 @@ if [ $1 -ge 1 ] ; then
 fi
 %else
 if [ $1 -ge 1 ] ; then
-	/sbin/service autofs condrestart > /dev/null 2>&1 || :
+	%{_sbindir}/service autofs condrestart > /dev/null 2>&1 || :
 fi
+ldconfig
 %endif
 
 #%triggerun -- %{name} < $bla release
@@ -200,7 +202,7 @@ fi
 %files
 %defattr(-,root,root)
 %doc CREDITS CHANGELOG INSTALL COPY* README* samples/ldap* samples/autofs.schema samples/autofs_ldap_auth.conf
-%config %{init_file_name}
+%{init_file_name}
 %config(noreplace) /etc/auto.master
 %config(noreplace) /etc/autofs.conf
 %config(noreplace,missingok) /etc/auto.misc
@@ -214,11 +216,16 @@ fi
 %{_sbindir}/fedfs-map-nfs4
 %endif
 %dir %{_libdir}/autofs
+%{_libdir}/libautofs.so
 %{_libdir}/autofs/*
 %{_mandir}/*/*
 %dir /etc/auto.master.d
 
 %changelog
+* Tue Apr 18 2022 Dmytro Tsurko <dmytro.tsurko@virtuozzo.com>
+- Update package to version 5.1.8.
+- Remove mount check patch
+
 * Tue Oct 30 2018 Ian Kent <raven@themaw.net>
 - Update package to version 5.1.5.
 
