@@ -1,0 +1,6 @@
+Package: mount-recovery
+Version: 1.1
+Architecture: all
+Maintainer: Dmytro Tsurko <dmytro.tsurko@virtuozzo.com>
+Depends: autofs
+Description: mount-recovery

@@ -1,0 +1,11 @@
+[Unit]
+Description=mount recovery unit
+Requires=autofs.service
+After=autofs.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=false
+ExecStart=/usr/local/sbin/mount-recovery
+
+

@@ -1,0 +1,27 @@
+#!/bin/bash
+getServerIP(){
+	mount | grep $1 | grep -v $AUTOFS_JEL | awk -F: '{print $1}'
+}
+
+AUTOFS_JEL=/etc/autofs.jelastic
+
+[ -f "$AUTOFS_JEL" ] || exit 0
+
+# get mount points
+MOUNTS=$(awk '{print $1}' $AUTOFS_JEL)
+
+# check mounted
+if [[ ${#MOUNTS[@]} -gt 0 ]]; then
+	for mnt in ${MOUNTS[@]}; do
+		# IP=$(mount | grep $mnt | grep -v $AUTOFS_JEL | awk -F: '{print $1}')
+		IP=$( getServerIP $mnt)
+		# while [ $IP ]; do
+		if [ $IP ]; then
+		    rpcinfo -u $IP mountd || umount -lv -t nfs4 $mnt;
+		    sleep 1;
+		    # IP=$(mount | grep /mnt | grep -v $AUTOFS_JEL | awk -F: '{print $1}')
+		    IP=$( getServerIP $mnt)
+		fi
+		# done
+	done
+fi
