@@ -18,6 +18,6 @@ for Centos8:
 for  Ubuntu/Debian
 ```sh
  $ docker build --build-arg AUTOFS_VERSION=5.1.8 -t autofs:ubuntu -f Dockerfile-ubuntu .
- $ docker run -v /home/dimkapc/work/jelastic-autofs/rpm:/mnt  autofs:ubuntu
+ $ docker run -v YOUR_PATH:/mnt  autofs:ubuntu
 ```
 in YOUR_PATH you'll get rpm and src.rpm packages
