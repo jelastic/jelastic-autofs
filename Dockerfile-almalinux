@@ -1,0 +1,39 @@
+ARG TAG
+FROM almalinux:9.0-20220706
+ARG AUTOFS_VERSION=5.1.8
+
+RUN dnf install -y --enablerepo=crb \
+    autoconf \
+    bison \
+    ca-certificates \
+    cyrus-sasl-devel \
+    flex \
+    gcc \
+    hesiod-devel \
+    krb5-devel \
+    libsss_autofs \
+    libtirpc-devel \
+    libxml2-devel \
+    make \
+    mc \
+    openldap-devel \
+    openssl-devel \
+    rpm-build \
+    systemd-devel \
+    wget
+
+RUN mkdir -p /root/rpmbuild/{SOURCES,SPECS} && \
+    wget https://mirrors.edge.kernel.org/pub/linux/daemons/autofs/v5/autofs-$AUTOFS_VERSION.tar.gz -O /root/rpmbuild/SOURCES/autofs-$AUTOFS_VERSION.tar.gz
+
+COPY autofs-init.patch 50-mount-recovery.conf mount-recovery mount-recovery.service mount-recovery.timer /root/rpmbuild/SOURCES/
+#COPY jelastic-autofs.patch /root/rpmbuild/SOURCES
+COPY autofs.spec mount-recovery.spec /root/rpmbuild/SPECS/
+
+RUN echo "rpmbuild -ba /root/rpmbuild/SPECS/autofs.spec && \
+    rpmbuild -ba /root/rpmbuild/SPECS/mount-recovery.spec && \
+    cp /root/rpmbuild/RPMS/x86_64/*.rpm /mnt/ && \
+    cp /root/rpmbuild/SRPMS/*.rpm /mnt/ " >/run.sh
+
+CMD bash /run.sh
+
+#docker run -v /home/dimka/work/autofs/$AUTOFS_VERSION/rpm:/mnt  autofs:c7

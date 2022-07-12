@@ -12,7 +12,6 @@
 
 # Use --without systemd in your rpmbuild command or force values to 0 to
 # disable them.
-#%define with_systemd        %{?_without_systemd:        0} %{?!_without_systemd:        1}
 %define with_systemd        1
 
 # Use --without libtirpc in your rpmbuild command or force values to 0 to
@@ -23,10 +22,10 @@
 # disable them.
 %define with_fedfs           %{?_without_fedfs:         0} %{?!_without_fedfs: 1}
 
-Summary: A tool from automatically mounting and umounting filesystems.
-Name: autofs
 %define version 5.1.8
 %define release 1j
+Summary: A tool from automatically mounting and umounting filesystems.
+Name: autofs
 Version: 5.1.8
 Release: 1j%{?dist}
 Epoch: 1
@@ -54,34 +53,14 @@ Requires(postun): systemd-units
 %endif
 Obsoletes: autofs-ldap
 Summary(de): autofs daemon 
-Summary(fr): démon autofs
-Summary(tr): autofs sunucu süreci
+Summary(fr): daemon autofs
+Summary(tr): autofs sunucu sereci
 Summary(sv): autofs-daemon
 
 %description
 autofs is a daemon which automatically mounts filesystems when you use
 them, and unmounts them later when you are not using them.  This can
 include network filesystems, CD-ROMs, floppies, and so forth.
-
-%description -l de
-autofs ist ein Dämon, der Dateisysteme automatisch montiert, wenn sie 
-benutzt werden, und sie später bei Nichtbenutzung wieder demontiert. 
-Dies kann Netz-Dateisysteme, CD-ROMs, Disketten und ähnliches einschließen. 
-
-%description -l fr
-autofs est un démon qui monte automatiquement les systèmes de fichiers
-lorsqu'on les utilise et les démonte lorsqu'on ne les utilise plus. Cela
-inclus les systèmes de fichiers réseau, les CD-ROMs, les disquettes, etc.
-
-%description -l tr
-autofs, kullanýlan dosya sistemlerini gerek olunca kendiliðinden baðlar
-ve kullanýmlarý sona erince yine kendiliðinden çözer. Bu iþlem, að dosya
-sistemleri, CD-ROM'lar ve disketler üzerinde yapýlabilir.
-
-%description -l sv
-autofs är en daemon som mountar filsystem när de använda, och senare
-unmountar dem när de har varit oanvända en bestämd tid.  Detta kan
-inkludera nätfilsystem, CD-ROM, floppydiskar, och så vidare.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -222,7 +201,7 @@ ldconfig
 %dir /etc/auto.master.d
 
 %changelog
-* Tue Apr 18 2022 Dmytro Tsurko <dmytro.tsurko@virtuozzo.com>
+* Mon Apr 18 2022 Dmytro Tsurko <dmytro.tsurko@virtuozzo.com>
 - Update package to version 5.1.8.
 - Remove mount check patch
 
@@ -234,4 +213,5 @@ ldconfig
 
 * Wed Jun  15 2016 Ian Kent <raven@themaw.net>
 - Update package to version 5.1.2.
+
 
