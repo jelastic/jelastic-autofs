@@ -46,7 +46,7 @@ ADD mount-recovery-control /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIA
 RUN chmod 755 /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN/postinst /root/mount-recovery/mount-recovery-$MR_VERSION/usr/local/sbin/mount-recovery
 
 RUN echo "cd /root/autofs/autofs-$AUTOFS_VERSION/ && dpkg-buildpackage -rfakeroot -b -d && cd ../ && cp -f *.deb /mnt" > /run.sh && \
-    echo "cd /root/mount-recovery/ && dpkg-deb --build mount-recovery-$MR_VERSION && cp -f *.deb /mnt" >> /run.sh
+    echo "cd /root/mount-recovery/ && dpkg-deb --build mount-recovery_$MR_VERSION && cp -f *.deb /mnt" >> /run.sh
 
 CMD bash /run.sh
 
