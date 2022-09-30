@@ -26,7 +26,7 @@
 %define release 1j
 Summary: A tool from automatically mounting and umounting filesystems.
 Name: autofs
-Version: 5.1.8
+Version: %{version}
 Release: 1j%{?dist}
 Epoch: 1
 License: GPL
@@ -201,8 +201,8 @@ ldconfig
 %dir /etc/auto.master.d
 
 %changelog
-* Mon Apr 18 2022 Dmytro Tsurko <dmytro.tsurko@virtuozzo.com>
-- Update package to version 5.1.8.
+* Mon Sep 30 2022 Dmytro Tsurko <dmytro.tsurko@virtuozzo.com>
+- Update package to version 5.1.7.
 - Remove mount check patch
 
 * Tue Oct 30 2018 Ian Kent <raven@themaw.net>

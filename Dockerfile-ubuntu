@@ -33,19 +33,19 @@ RUN mkdir -p /root/autofs  && cd /root/autofs && \
     dpkg-source -x autofs_$AUTOFS_VERSION-$AUTOFS_RELEASE.dsc && \
     echo '9' > /root/autofs/autofs-$AUTOFS_VERSION/debian/compat && \
     sed -i "s/$AUTOFS_VERSION-$AUTOFS_RELEASE/$AUTOFS_VERSION-${AUTOFS_RELEASEJ}j/" /root/autofs/autofs-$AUTOFS_VERSION/debian/changelog && \
-    mkdir -p /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN && cd /root/mount-recovery/mount-recovery-$MR_VERSION && \
+    mkdir -p /root/mount-recovery/mount-recovery_$MR_VERSION/DEBIAN && cd /root/mount-recovery/mount-recovery_$MR_VERSION && \
     mkdir -p usr/local/sbin lib/systemd/system etc/systemd/system/autofs.service.d
 
 ADD rules /root/autofs/autofs-$AUTOFS_VERSION/debian/rules
-ADD 50-mount-recovery.conf  /root/mount-recovery/mount-recovery-$MR_VERSION/etc/systemd/system/autofs.service.d/
-ADD mount-recovery  /root/mount-recovery/mount-recovery-$MR_VERSION/usr/local/sbin/
-ADD mount-recovery.service mount-recovery.timer  /root/mount-recovery/mount-recovery-$MR_VERSION/lib/systemd/system/
-ADD mount-recovery-postinst /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN/postinst
-ADD mount-recovery-control /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN/control
+ADD 50-mount-recovery.conf  /root/mount-recovery/mount-recovery_$MR_VERSION/etc/systemd/system/autofs.service.d/
+ADD mount-recovery  /root/mount-recovery/mount-recovery_$MR_VERSION/usr/local/sbin/
+ADD mount-recovery.service mount-recovery.timer  /root/mount-recovery/mount-recovery_$MR_VERSION/lib/systemd/system/
+ADD mount-recovery-postinst /root/mount-recovery/mount-recovery_$MR_VERSION/DEBIAN/postinst
+ADD mount-recovery-control /root/mount-recovery/mount-recovery_$MR_VERSION/DEBIAN/control
 
-RUN chmod 755 /root/mount-recovery/mount-recovery-$MR_VERSION/DEBIAN/postinst /root/mount-recovery/mount-recovery-$MR_VERSION/usr/local/sbin/mount-recovery
+RUN chmod 755 /root/mount-recovery/mount-recovery_$MR_VERSION/DEBIAN/postinst /root/mount-recovery/mount-recovery_$MR_VERSION/usr/local/sbin/mount-recovery
 
-RUN echo "cd /root/autofs/autofs-$AUTOFS_VERSION/ && dpkg-buildpackage -rfakeroot -b -d && cd ../ && cp -f *.deb /mnt" > /run.sh && \
+RUN echo "cd /root/autofs/autofs-$AUTOFS_VERSION/ && sed -i '/Rules-Requires-Root/d' debian/control && dpkg-buildpackage -rfakeroot -b -d && cd ../ && cp -f *.deb /mnt" > /run.sh && \
     echo "cd /root/mount-recovery/ && dpkg-deb --build mount-recovery_$MR_VERSION && cp -f *.deb /mnt" >> /run.sh
 
 CMD bash /run.sh
