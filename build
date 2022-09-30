@@ -1,0 +1,10 @@
+#!/bin/bash
+autofsVersion=$1
+curDir=$(pwd)
+mkdir -p $curDir/packages
+
+#docker build --build-arg TAG=7 --build-arg AUTOFS_VERSION=$autofsVersion -t autofs:c7 -f Dockerfile-centos . && \
+#docker run --rm -v $curDir/packages:/mnt autofs:c7
+
+docker build --build-arg AUTOFS_VERSION=$autofsVersion -t autofs:ubuntu -f Dockerfile-ubuntu . && \
+docker run -v $curDir/packages:/mnt autofs:ubuntu
